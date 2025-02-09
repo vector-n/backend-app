@@ -1,11 +1,23 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const path = require("path");
 const cors = require("cors");
 require("dotenv").config();
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+
+
+
+
+// Serve Static Files (Frontend)
+app.use(express.static(path.join(__dirname, "public"))); 
+
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI, {
