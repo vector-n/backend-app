@@ -3,33 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Skull Farming</title>
+    <title>Skull Farming Game</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <!-- Skull Icon -->
-        <div class="skull-container">
-            <img src="skull.png" alt="Skull" class="skull-icon">
-            <p id="skull-balance">Skull: 0</p>
+        <!-- Skull Display -->
+        <div class="skull-section">
+            <h1>💀 Skull Farming</h1>
+            <p>Skull Balance: <span id="skullBalance">0</span></p>
         </div>
 
         <!-- Farming Button -->
-        <button id="farm-btn">Start the Farming</button>
-        <p id="timer-text"></p>
+        <button id="startFarming">Start Farming</button>
 
-        <!-- Navigation -->
+        <!-- Claim Skulls -->
+        <button id="claimSkull">Claim Skull</button>
+
+        <!-- Daily Bonus -->
+        <button id="dailyBonus">Claim Daily Bonus</button>
+
+        <!-- Navigation Bar -->
         <div class="nav-bar">
-            <button class="nav-btn">Leaderboard</button>
-            <button class="nav-btn">Minigames</button>
-            <button class="nav-btn">Shop</button>
+            <button id="leaderboard">🏆 Leaderboard</button>
+            <button id="tasks">📝 Tasks</button>
+            <button id="miniGames">🎮 Mini Games</button>
         </div>
-    </div>
-
-    <!-- Daily Bonus Popup -->
-    <div id="daily-bonus" class="popup">
-        <p>🎁 Daily Bonus: +10 Skull!</p>
-        <button id="close-popup">Claim</button>
     </div>
 
     <script src="script.js"></script>

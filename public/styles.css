@@ -1,60 +1,56 @@
+/* Dark Mode Theme */
 body {
     background-color: #121212;
     color: white;
     font-family: Arial, sans-serif;
     text-align: center;
+    margin: 0;
+    padding: 0;
 }
 
+/* Container */
 .container {
-    margin-top: 50px;
+    max-width: 400px;
+    margin: auto;
+    padding: 20px;
 }
 
-.skull-container {
+/* Skull Section */
+.skull-section {
     margin-bottom: 20px;
 }
 
-.skull-icon {
-    width: 100px;
-}
-
-#farm-btn {
-    background-color: #0D6EFD;
+/* Buttons */
+button {
+    background-color: #1E90FF;
     color: white;
     border: none;
-    padding: 15px;
-    font-size: 18px;
+    padding: 10px;
+    margin: 10px;
+    font-size: 16px;
     cursor: pointer;
+    border-radius: 5px;
+    width: 100%;
 }
 
+button:disabled {
+    background-color: #555;
+}
 
-/* Fixed Bottom Navigation Bar */
+/* Navigation Bar */
 .nav-bar {
     position: fixed;
     bottom: 0;
-    left: 0;
     width: 100%;
-    background-color: #1A1A2E;
+    background-color: #222;
+    padding: 10px 0;
     display: flex;
     justify-content: space-around;
-    padding: 10px 0;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.5);
 }
 
-.nav-btn {
+.nav-bar button {
     background: none;
-    color: white;
     border: none;
-    font-size: 16px;
-    cursor: pointer;
-    padding: 10px;
-}
-.popup {
-    display: none;
-    background-color: #1A1A2E;
-    padding: 20px;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    border-radius: 10px;
+    color: white;
+    font-size: 18px;
 }
