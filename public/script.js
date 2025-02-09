@@ -97,6 +97,6 @@ function countdownTimer(endTime) {
         }
     }, 1000);
 }
-
+console.log("Frontend script loaded!");
 // Load Initial Data
 updateUI();
