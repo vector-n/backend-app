@@ -1,97 +1,105 @@
-require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
-const { Telegraf } = require("telegraf");
 const cors = require("cors");
-const path = require("path");
+require("dotenv").config();
 
 const app = express();
-const bot = new Telegraf(process.env.BOT_TOKEN);
-
-// Middleware
-app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public"))); // Serve frontend files
+app.use(cors());
 
-// Connect to MongoDB
-mongoose
-  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("✅ Connected to MongoDB"))
-  .catch((err) => console.log("❌ MongoDB Connection Error:", err));
+// MongoDB Connection
+mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}).then(() => console.log("MongoDB Connected"))
+  .catch(err => console.error("MongoDB Connection Error:", err));
 
 // User Schema
-const UserSchema = new mongoose.Schema({
-  telegramId: { type: String, unique: true },
-  username: String,
-  points: { type: Number, default: 0 },
-  referredBy: { type: String, default: null },
+const userSchema = new mongoose.Schema({
+    telegramId: { type: String, unique: true, required: true },
+    skullBalance: { type: Number, default: 0 },
+    farmingEndTime: { type: Date, default: null },
+    lastDailyBonus: { type: Date, default: null }
+});
+const User = mongoose.model("User", userSchema);
+
+// API: Register User
+app.post("/register", async (req, res) => {
+    const { telegramId } = req.body;
+    try {
+        let user = await User.findOne({ telegramId });
+        if (!user) {
+            user = new User({ telegramId });
+            await user.save();
+        }
+        res.json({ skullBalance: user.skullBalance, farmingEndTime: user.farmingEndTime });
+    } catch (err) {
+        res.status(500).json({ error: "Server error" });
+    }
 });
 
-const User = mongoose.model("User", UserSchema);
+// API: Start Farming
+app.post("/start-farming", async (req, res) => {
+    const { telegramId } = req.body;
+    try {
+        const user = await User.findOne({ telegramId });
+        if (!user) return res.status(404).json({ error: "User not found" });
 
-// 🎮 Telegram Bot Commands
-bot.start(async (ctx) => {
-  const { id, username } = ctx.from;
+        const farmingEndTime = new Date();
+        farmingEndTime.setHours(farmingEndTime.getHours() + 8); // 8 hours farming time
 
-  let user = await User.findOne({ telegramId: id });
-  if (!user) {
-    user = new User({ telegramId: id, username });
-    await user.save();
-  }
+        user.farmingEndTime = farmingEndTime;
+        await user.save();
 
-  ctx.reply(`💀 Welcome, ${username}! You have ${user.points} points.  
-Click here to open the Mini App: [Open Game](https://convertible-onion-rover-story.trycloudflare.com/)`, { parse_mode: "Markdown" });
+        res.json({ message: "Farming started", farmingEndTime });
+    } catch (err) {
+        res.status(500).json({ error: "Server error" });
+    }
 });
 
-bot.command("leaderboard", async (ctx) => {
-  const topUsers = await User.find().sort({ points: -1 }).limit(5);
-  let message = "🏆 Leaderboard 🏆\n\n";
-  topUsers.forEach((user, index) => {
-    message += `${index + 1}. ${user.username} - ${user.points} points\n`;
-  });
+// API: Claim Skull
+app.post("/claim-skull", async (req, res) => {
+    const { telegramId } = req.body;
+    try {
+        const user = await User.findOne({ telegramId });
+        if (!user) return res.status(404).json({ error: "User not found" });
 
-  ctx.reply(message);
+        if (new Date() >= user.farmingEndTime) {
+            user.skullBalance += 100;
+            user.farmingEndTime = null;
+            await user.save();
+            res.json({ message: "Skulls claimed", skullBalance: user.skullBalance });
+        } else {
+            res.status(400).json({ error: "Farming not finished yet" });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Server error" });
+    }
 });
 
-bot.command("refer", async (ctx) => {
-  ctx.reply(`📢 Invite friends using this link:  
-https://t.me/Skeleton_gamebot?start=${ctx.from.id}`);
+// API: Claim Daily Bonus
+app.post("/claim-daily-bonus", async (req, res) => {
+    const { telegramId } = req.body;
+    try {
+        const user = await User.findOne({ telegramId });
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        const today = new Date();
+        const lastBonusDate = new Date(user.lastDailyBonus);
+        
+        if (!user.lastDailyBonus || lastBonusDate.toDateString() !== today.toDateString()) {
+            user.skullBalance += 10;
+            user.lastDailyBonus = today;
+            await user.save();
+            res.json({ message: "Daily bonus claimed", skullBalance: user.skullBalance });
+        } else {
+            res.status(400).json({ error: "Daily bonus already claimed today" });
+        }
+    } catch (err) {
+        res.status(500).json({ error: "Server error" });
+    }
 });
 
-// Start the bot
-bot.launch();
-console.log("🤖 Bot is running!");
-
-// 🌐 Mini App API Routes
-app.get("/api/user/:id", async (req, res) => {
-  const user = await User.findOne({ telegramId: req.params.id });
-  if (!user) return res.status(404).json({ message: "User not found" });
-  res.json(user);
-});
-
-app.post("/api/reward/:id", async (req, res) => {
-  const user = await User.findOne({ telegramId: req.params.id });
-  if (user) {
-    user.points += 10; // Daily reward points
-    await user.save();
-    res.json({ points: user.points });
-  } else {
-    res.status(404).json({ message: "User not found" });
-  }
-});
-
-app.get("/api/leaderboard", async (req, res) => {
-  const topUsers = await User.find().sort({ points: -1 }).limit(5);
-  res.json(topUsers);
-});
-
-// Root Route
-app.get("/", (req, res) => {
-  res.send("💀 Skeleton Game API Running!");
-});
-
-// Start Express Server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-
-
+// Start Server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
